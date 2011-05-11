@@ -30,14 +30,14 @@ include_directories (
 #add a library to the project
 add_library(myfuncs src/myfuncs.cpp)
 add_library(Xn_sensor src/Xn_sensor.cpp)
-#add_library(poseestimator src/poseestimator.cpp)
+add_library(poseestimator src/poseestimator.cpp)
 #add an executable
 add_executable(sensor_viewer src/sensor_viewer.cpp)
-#add_executable(model_extractor src/model_extractor.cpp)
+add_executable(model_extractor src/model_extractor.cpp)
 add_executable(example src/example.cpp)
 
 #link the libraries
 target_link_libraries(sensor_viewer Xn_sensor ${OpenCV_LIBS} ${OPENNI_LIBRARY})
-#target_link_libraries(model_extractor Xn_sensor myfuncs poseestimator ${OpenCV_LIBS} ${PCL_LIBRARIES})
+target_link_libraries(model_extractor Xn_sensor myfuncs poseestimator ${OpenCV_LIBS} ${PCL_LIBRARIES})
 target_link_libraries(example Xn_sensor ${PCL_LIBRARIES})
 

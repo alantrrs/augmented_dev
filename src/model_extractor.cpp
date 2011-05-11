@@ -8,8 +8,6 @@
 #define WIDTH	640
 #define	HEIGHT	480
 
-using namespace xn;
-
 int main (int argc,char* argv[]){
 	if (argc != 2 && argc != 3){
 		printf("usage:\n %s /path/to/recoding/filename.oni\n",argv[0]);
@@ -17,8 +15,9 @@ int main (int argc,char* argv[]){
 	}
 	Xn_sensor sensor(WIDTH,HEIGHT);
 	sensor.play(argv[1]);
-	
+	cvNamedWindow( "Model Extractor Viewer", 1 );
 	IplImage* rgb_image = cvCreateImageHeader(cvSize(WIDTH,HEIGHT), 8, 3);
+	IplImage* test = cvCreateImageHeader(cvSize(WIDTH,HEIGHT), 8, 3);
 	IplImage* gray = cvCreateImage(cvSize(WIDTH,HEIGHT), 8, 1);
 	Mat img;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -34,21 +33,36 @@ int main (int argc,char* argv[]){
 		//Get the frame 
 		sensor.update();
 		sensor.getPCL(cloud);
-		sensor.getImage(rgb_image);
+		cvSetData(rgb_image,sensor.rgb,rgb_image->widthStep);
 		//Estimate Camera Pose from fiducial
 		cvCvtColor(rgb_image,gray,CV_BGR2GRAY);
-		//img=rgb_image;
 		if (fiducial.find(gray)){
 			pose.estimate(gray,fiducial);
+			//fiducial.draw(rgb_image);
 		}
-		if (pose.found()){
-			//pe.draw(img,fiducial);
+		if (pose.isFound()){
 			printf("Rotation");
-			printMat<double>(pose.rvec);
+			printMat<double>(pose.getR());
 			printf("Translation");
-			printMat<double>(pose.tvec);
+			printMat<double>(pose.getT());
 		}
-		//Segment volume around the fiducial			
+		//Segment volume around the fiducial
+		/*
+		int box = 200;
+		pcl::PassThrough<Cloud_t::PointType> pass_z, pass_x, pass_y;
+		pass_z.setFilterFieldName("s");
+		pass_z.setFilterLimits(0.02, box);
+		pass_x.setFilterFieldName("u");
+		pass_x.setFilterLimits(-box, box);
+		pass_y.setFilterFieldName("v");
+		pass_y.setFilterLimits(-box, box);
+		pass_z.setInputCloud(cloud_);
+		pass_z.filter(*cloud_);
+		pass_y.setInputCloud(cloud_);
+		pass_y.filter(*cloud_);
+		pass_x.setInputCloud(cloud_);
+		pass_x.filter(*cloud_);
+		 */ 			
 		//Create 3D model
 		viewer.showCloud (cloud);
 	}

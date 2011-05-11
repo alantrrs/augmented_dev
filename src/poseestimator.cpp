@@ -1,6 +1,4 @@
 #include <poseestimator.h>
-#include <iostream>
-
 
 Fiducial::Fiducial(char* file){
 	FileStorage fs(file,FileStorage::READ);
@@ -27,6 +25,9 @@ bool Fiducial::find(Mat gray){
 	*/
 	return found;
 }
+void Fiducial::draw(Mat rgb_image){
+	drawChessboardCorners(rgb_image,size,corners,found);
+}
 
 Pose::Pose()
 {
@@ -35,30 +36,13 @@ Pose::Pose()
 	found =  false;
 }
 
-void PoseEstimator::cvEstimate(Mat gray,Fiducial& f,Pose& p){
-
-	printf("Rotation");
-			printMat<double>(p.rvec);
-			printf("Translation");
-			printMat<double>(p.tvec);
+void Pose::estimate(Mat gray,Fiducial& f){
 	if (f.found){
-		printf("Corners2d:");
-		printMat2(Mat(f.corners));
-		printf("Points3d:");
-		printMat2(Mat(f.points));
 		Mat K = (Mat_<float>(3,3) << 525., 0., 320., 0., 525., 240., 0., 0., 1.);
-		solvePnP (Mat(f.points).t(), Mat(f.corners), K, Mat(), p.rvec, p.tvec, false);
-		p.found = true;
+		solvePnP (Mat(f.points).t(), Mat(f.corners), K, Mat(), rvec, tvec, false);
+		found = true;
 	}
 	else
-		p.found = false;
-}
-	
-void PoseEstimator::xnEstimate(Mat gray,Fiducial& f,Pose& p){
-
-}
-
-void PoseEstimator::draw(Mat rgb,Fiducial f){
-	drawChessboardCorners(rgb,f.size,f.corners,f.found);
+		found = false;
 }
 	

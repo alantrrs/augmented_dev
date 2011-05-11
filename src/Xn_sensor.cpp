@@ -92,14 +92,16 @@ void  Xn_sensor::play(char* file){
 
 XnUInt8* Xn_sensor::getImageData(){
 	Xn_image.GetMetaData(rgb_md);
-	return rgb_md.WritableData();
+	rgb = rgb_md.WritableData();
+	return rgb;
 }
 
 void Xn_sensor::getPCL(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud){
 	 // Take current depth map
     const XnDepthPixel* depthmap = Xn_depth.GetDepthMap();
     // Take current rgb data
-    const XnRGB24Pixel* rgb = Xn_image.GetRGB24ImageMap(); 
+    Xn_image.GetMetaData(rgb_md);
+	rgb = rgb_md.WritableData(); 
 	// Fill in the cloud data
 	int i=0;
 	for (int y=0; y<cloud->height; y++){
@@ -118,7 +120,7 @@ void Xn_sensor::getPCL(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud){
 			cloud->points[i].x = depthpx[i].X;
 			cloud->points[i].y = depthpx[i].Y;
 			cloud->points[i].z = depthpx[i].Z;
-			color =  (rgb[i].nRed<<16)|(rgb[i].nGreen<<8)|(rgb[i].nBlue);
+			color =  (rgb[3*i]<<16)|(rgb[3*i+1]<<8)|(rgb[3*i+2]);
 			cloud->points[i].rgb = *(float *)(&color);
 			i++;
 		}

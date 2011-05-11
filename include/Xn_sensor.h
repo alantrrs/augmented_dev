@@ -13,6 +13,7 @@ class Xn_sensor{
 	int x_res;
 	int y_res;
 public:
+	XnUInt8* rgb;
 	Xn_sensor(int width, int height);
 	inline int getX(){return x_res;}
 	inline int getY(){return y_res;}
