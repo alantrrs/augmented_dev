@@ -103,6 +103,9 @@ void Xn_sensor::getPCL(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud){
     Xn_image.GetMetaData(rgb_md);
 	rgb = rgb_md.WritableData(); 
 	// Fill in the cloud data
+	cloud->width  = x_res;
+	cloud->height = y_res;
+	cloud->points.resize (cloud->width * cloud->height);
 	int i=0;
 	for (int y=0; y<cloud->height; y++){
 		for (int x=0;x<cloud->width; x++){
