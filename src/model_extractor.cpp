@@ -2,11 +2,51 @@
 #include <myfuncs.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/registration/transforms.h>
 #include <poseestimator.h>
-
+#include <opencv2/core/eigen.hpp>
 
 #define WIDTH	640
 #define	HEIGHT	480
+
+void boxFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Pose pose){		
+	//Transform the cloud
+	//convert the tranform from our fiducial markers to
+    //the Eigen
+    Eigen::Matrix<float, 3, 3> R;
+    Eigen::Vector3f T;
+    cv::cv2eigen(pose.getT(), T);
+    cv::cv2eigen(pose.getR(), R);
+    //get the inverse transform to bring the point cloud's into the
+    //same coordinate frame
+    Eigen::Affine3f transform;
+    transform = Eigen::AngleAxisf(R.transpose());
+    transform *= Eigen::Translation3f(-T);
+    //transform the cloud in place
+    pcl::transformPointCloud(*cloud, *cloud, transform);
+	
+	//Define the box
+	float box = 200.00;
+	pcl::PassThrough<pcl::PointXYZRGB> pass_z, pass_x, pass_y;
+	//Filters in x
+	pass_x.setFilterFieldName("x");
+	pass_x.setFilterLimits(0, box);
+	pass_x.setInputCloud(cloud);
+	pass_x.filter(*cloud);
+	//Filters in y
+	pass_y.setFilterFieldName("y");
+	pass_y.setFilterLimits(0, box);
+	pass_y.setInputCloud(cloud);
+	pass_y.filter(*cloud);
+	//Filters in z
+	pass_z.setFilterFieldName("z");
+	pass_z.setFilterLimits(0,box);
+	pass_z.setInputCloud(cloud);
+	pass_z.filter(*cloud);	
+}
+
+
 
 int main (int argc,char* argv[]){
 	if (argc != 2 && argc != 3){
@@ -21,9 +61,6 @@ int main (int argc,char* argv[]){
 	IplImage* gray = cvCreateImage(cvSize(WIDTH,HEIGHT), 8, 1);
 	Mat img;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-	cloud->width  = sensor.getX();
-	cloud->height = sensor.getY();
-	cloud->points.resize (cloud->width * cloud->height);
 	pcl::visualization::CloudViewer viewer("Model Extractor Viewer");
 	
 	//Read Fiducial from file
@@ -36,7 +73,7 @@ int main (int argc,char* argv[]){
 		cvSetData(rgb_image,sensor.rgb,rgb_image->widthStep);
 		//Estimate Camera Pose from fiducial
 		cvCvtColor(rgb_image,gray,CV_BGR2GRAY);
-		if (fiducial.find(gray)){
+		if (fiducial.find(gray,true)){
 			pose.estimate(gray,fiducial);
 			//fiducial.draw(rgb_image);
 		}
@@ -45,25 +82,11 @@ int main (int argc,char* argv[]){
 			printMat<double>(pose.getR());
 			printf("Translation");
 			printMat<double>(pose.getT());
+			//Segment volume around the fiducial
+			boxFilter(cloud,pose);
+			//Create 3D model
+			
 		}
-		//Segment volume around the fiducial
-		/*
-		int box = 200;
-		pcl::PassThrough<Cloud_t::PointType> pass_z, pass_x, pass_y;
-		pass_z.setFilterFieldName("s");
-		pass_z.setFilterLimits(0.02, box);
-		pass_x.setFilterFieldName("u");
-		pass_x.setFilterLimits(-box, box);
-		pass_y.setFilterFieldName("v");
-		pass_y.setFilterLimits(-box, box);
-		pass_z.setInputCloud(cloud_);
-		pass_z.filter(*cloud_);
-		pass_y.setInputCloud(cloud_);
-		pass_y.filter(*cloud_);
-		pass_x.setInputCloud(cloud_);
-		pass_x.filter(*cloud_);
-		 */ 			
-		//Create 3D model
 		viewer.showCloud (cloud);
 	}
 	sensor.shutdown();

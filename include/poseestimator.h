@@ -9,7 +9,9 @@ class Fiducial {
 	bool found;
 public:
 	Fiducial(char* file);
-	bool find(Mat gray);
+	inline vector<Point3f> getPoints(){return points;}
+	inline vector<Point2f> getCorners(){return corners;}
+	bool find(Mat gray,bool accurate);
 	void draw(Mat rgb_img);
 	friend class Pose;
 };
@@ -22,6 +24,6 @@ public:
 	Pose();
 	void estimate(Mat gray, Fiducial& f);
 	inline bool isFound(){ return found; }
-	inline Mat getR(){return rvec;}
+	inline Mat getR(){Mat R; cv::Rodrigues(rvec, R); return R;}
 	inline Mat getT(){return tvec;}
 };

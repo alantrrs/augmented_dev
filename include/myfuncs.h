@@ -3,6 +3,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+
 #pragma once
 
 /*F*/
@@ -61,12 +62,5 @@ void printMat(cv::Mat matrix){
 *INPUT: Proposed Matches with outliers: model_pts->current_pts
 *OUTPUT: Returns the Least Squares 3D Transformation (Rot,Trans)
 *F*/
-
  void ICP(const cv::Mat model,const cv::Mat observed, cv::Mat Rotation, cv::Mat Translation);
-
- void bodyPartRecognition(const cv::Mat user,cv::Mat pose);
-/*
-*INPUT: body silohutte pixels
-*OUTPUT: Returns the pose state matrix
-*/
 

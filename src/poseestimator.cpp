@@ -14,15 +14,13 @@ Fiducial::Fiducial(char* file){
 	found=false;
 }
 
-bool Fiducial::find(Mat gray){
+bool Fiducial::find(Mat gray, bool accurate =false){
 	found = findChessboardCorners(gray, size, corners,CV_CALIB_CB_ADAPTIVE_THRESH 
 														+ CV_CALIB_CB_NORMALIZE_IMAGE 
 														+ CV_CALIB_CB_FAST_CHECK);
-	//accurate 
-	/*if(found){
+	if(found && accurate){
 	  cornerSubPix(gray, corners, Size(11, 11), Size(-1, -1),TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 	}
-	*/
 	return found;
 }
 void Fiducial::draw(Mat rgb_image){
@@ -38,8 +36,8 @@ Pose::Pose()
 
 void Pose::estimate(Mat gray,Fiducial& f){
 	if (f.found){
-		Mat K = (Mat_<float>(3,3) << 525., 0., 320., 0., 525., 240., 0., 0., 1.);
-		solvePnP (Mat(f.points).t(), Mat(f.corners), K, Mat(), rvec, tvec, false);
+		Mat K = (Mat_<float>(3,3) << 525., 0., 320., 0., -525., 240., 0., 0., 1.);
+		solvePnP (Mat(f.points), Mat(f.corners), K, Mat(), rvec, tvec, false);
 		found = true;
 	}
 	else

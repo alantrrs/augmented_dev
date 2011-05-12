@@ -259,3 +259,4 @@ int findTransformationRANSAC(const Mat model_pts,const Mat current_pts,int* cons
 		}
 		return binliers;
 	}
+
