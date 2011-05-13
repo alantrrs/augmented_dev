@@ -4,16 +4,18 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/registration/transforms.h>
+#include <pcl/registration/icp.h>
 #include <poseestimator.h>
 #include <opencv2/core/eigen.hpp>
 
 #define WIDTH	640
 #define	HEIGHT	480
 
+bool first = true;
+
 void boxFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Pose pose){		
 	//Transform the cloud
-	//convert the tranform from our fiducial markers to
-    //the Eigen
+	//convert the tranform from our fiducial markers to the Eigen
     Eigen::Matrix<float, 3, 3> R;
     Eigen::Vector3f T;
     cv::cv2eigen(pose.getT(), T);
@@ -31,12 +33,12 @@ void boxFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Pose pose){
 	pcl::PassThrough<pcl::PointXYZRGB> pass_z, pass_x, pass_y;
 	//Filters in x
 	pass_x.setFilterFieldName("x");
-	pass_x.setFilterLimits(0, box);
+	pass_x.setFilterLimits(-box, box);
 	pass_x.setInputCloud(cloud);
 	pass_x.filter(*cloud);
 	//Filters in y
 	pass_y.setFilterFieldName("y");
-	pass_y.setFilterLimits(0, box);
+	pass_y.setFilterLimits(-box, box);
 	pass_y.setInputCloud(cloud);
 	pass_y.filter(*cloud);
 	//Filters in z
@@ -46,7 +48,24 @@ void boxFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Pose pose){
 	pass_z.filter(*cloud);	
 }
 
-
+void buildModel(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,pcl::PointCloud<pcl::PointXYZRGB>::Ptr model){
+	if (first){
+		*model = (*cloud);
+		first=false;
+	}
+	else {
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB,pcl::PointXYZRGB> ICP;
+		ICP.setMaxCorrespondenceDistance( 10 );
+		ICP.setTransformationEpsilon( 0.5 );
+		ICP.setMaximumIterations( 100 );
+		ICP.setInputTarget( boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB> >(*model) );
+		ICP.setInputCloud(cloud);
+		pcl::PointCloud<pcl::PointXYZRGB> Final;
+		ICP.align( Final );
+		if( ICP.hasConverged() )
+			*model += Final;
+	}
+}
 
 int main (int argc,char* argv[]){
 	if (argc != 2 && argc != 3){
@@ -54,19 +73,22 @@ int main (int argc,char* argv[]){
 		return 0;
 	}
 	Xn_sensor sensor(WIDTH,HEIGHT);
-	sensor.play(argv[1]);
+	sensor.play(argv[1],false);
 	cvNamedWindow( "Model Extractor Viewer", 1 );
 	IplImage* rgb_image = cvCreateImageHeader(cvSize(WIDTH,HEIGHT), 8, 3);
 	IplImage* test = cvCreateImageHeader(cvSize(WIDTH,HEIGHT), 8, 3);
 	IplImage* gray = cvCreateImage(cvSize(WIDTH,HEIGHT), 8, 1);
 	Mat img;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr model (new pcl::PointCloud<pcl::PointXYZRGB>);
+	
 	pcl::visualization::CloudViewer viewer("Model Extractor Viewer");
+
 	
 	//Read Fiducial from file
 	Fiducial fiducial("fiducial.yml");
 	Pose pose;
-	  while(!viewer.wasStopped()){
+	  while(!viewer.wasStopped() && !sensor.endPlaying()){
 		//Get the frame 
 		sensor.update();
 		sensor.getPCL(cloud);
@@ -85,10 +107,11 @@ int main (int argc,char* argv[]){
 			//Segment volume around the fiducial
 			boxFilter(cloud,pose);
 			//Create 3D model
-			
+			buildModel(cloud,model);
 		}
-		viewer.showCloud (cloud);
+		viewer.showCloud (model);
 	}
+	pcl::io::savePCDFileASCII ("model.pcd", *model);
 	sensor.shutdown();
-return 0;
+	return 0;
 }
