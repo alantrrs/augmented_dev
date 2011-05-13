@@ -82,13 +82,13 @@ int main (int argc,char* argv[]){
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr model (new pcl::PointCloud<pcl::PointXYZRGB>);
 	
-	pcl::visualization::CloudViewer viewer("Model Extractor Viewer");
+	//pcl::visualization::CloudViewer viewer("Model Extractor Viewer");
 
 	
 	//Read Fiducial from file
 	Fiducial fiducial("fiducial.yml");
 	Pose pose;
-	  while(!viewer.wasStopped() && !sensor.endPlaying()){
+	  while(/*!viewer.wasStopped() && */!sensor.endPlaying()){
 		//Get the frame 
 		sensor.update();
 		sensor.getPCL(cloud);
@@ -109,9 +109,10 @@ int main (int argc,char* argv[]){
 			//Create 3D model
 			buildModel(cloud,model);
 		}
-		viewer.showCloud (model);
+		//viewer.showCloud (model);
+		
 	}
-	pcl::io::savePCDFileASCII ("model.pcd", *model);
+	pcl::io::savePCDFileBinary ("model.pcd", *model);
 	sensor.shutdown();
 	return 0;
 }
