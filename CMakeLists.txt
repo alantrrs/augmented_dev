@@ -35,11 +35,13 @@ add_library(poseestimator src/poseestimator.cpp)
 add_executable(sensor_viewer src/sensor_viewer.cpp)
 add_executable(model_extractor src/model_extractor.cpp)
 add_executable(example src/example.cpp)
+add_executable(pcd_reader src/pcd_reader.cpp)
 #add_executable(pairwisereg src/pairwisereg.cpp)
 
 #link the libraries
 target_link_libraries(sensor_viewer Xn_sensor ${OpenCV_LIBS} ${OPENNI_LIBRARY})
 target_link_libraries(model_extractor Xn_sensor myfuncs poseestimator ${OpenCV_LIBS} ${PCL_LIBRARIES})
 target_link_libraries(example Xn_sensor ${PCL_LIBRARIES})
+target_link_libraries(pcd_reader ${PCL_LIBRARIES})
 #target_link_libraries(pairwisereg ${PCL_LIBRARIES})
 
