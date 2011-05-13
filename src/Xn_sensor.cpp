@@ -70,7 +70,7 @@ void Xn_sensor::record(char* file){
 	}
 }
 
-void  Xn_sensor::play(char* file){
+void  Xn_sensor::play(char* file,bool replay ){
 	XnStatus nRetVal = XN_STATUS_OK;
 	nRetVal = context.Init();
 	if (nRetVal != XN_STATUS_OK){
@@ -88,6 +88,11 @@ void  Xn_sensor::play(char* file){
 	if (nRetVal != XN_STATUS_OK){
 		printf("Failed to find image node: %s\n", xnGetStatusString(nRetVal));
 	}
+	nRetVal = context.FindExistingNode(XN_NODE_TYPE_PLAYER,Xn_player); 
+	if (nRetVal != XN_STATUS_OK){
+		printf("Failed to find player node: %s\n", xnGetStatusString(nRetVal));
+	}
+	Xn_player.SetRepeat(replay); 
 }
 
 XnUInt8* Xn_sensor::getImageData(){
